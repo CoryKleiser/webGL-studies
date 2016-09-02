@@ -2,7 +2,20 @@
  * Created by moku on 8/31/16.
  */
 var gl,
-    shaderProgram;
+    shaderProgram,
+    vertices,
+    vertexCount = 5000,
+    mouseX = 0,
+    mouseY = 0;
+
+canvas.addEventListener("mousemove", function(event) {
+    mouseX = map(event.clientX, 0, canvas.width, -1, 1);
+    mouseY = map(event.clientY, 0, canvas.height, 1, -1);
+});
+
+function map(value, minSrc, maxSrc, minDst, maxDst) {
+    return (value - minSrc) / (maxSrc - minSrc) * (maxDst - minDst) + minDst;
+}
 
 initGL();
 createShaders();
@@ -17,28 +30,10 @@ function initGL(){
 }
 
 function createShaders(){
-    var vs = "";
-    vs += "attribute vec4 coords;";
-    vs += "attribute float pointSize;";
-    vs += "void main(void) {";
-    vs += "  gl_Position = coords;";
-    vs += "  gl_PointSize = pointSize;";
-    vs += "}";
 
-    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(vertexShader, vs);
-    gl.compileShader(vertexShader);
+    var vertexShader = getShader(gl, "shader-vs");
+    var fragmentShader = getShader(gl, "shader-fs");
 
-    var fs = "";
-    fs += "precision mediump float;";
-    fs += "uniform vec4 color;";
-    fs += "void main(void) {";
-    fs += "  gl_FragColor = color;";
-    fs += "}";
-
-    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(fragmentShader, fs);
-    gl.compileShader(fragmentShader);
 
     shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertexShader);
@@ -48,17 +43,90 @@ function createShaders(){
 }
 
 function createVertices() {
+    vertices = [];
+
+    for(var i = 0; i<vertexCount; i++) {
+        vertices.push(Math.random() * .5 - .25);
+        vertices.push(Math.random() * .5 - .25);
+    }
+
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
+
     var coords = gl.getAttribLocation(shaderProgram, "coords");
-    gl.vertexAttrib3f(coords, 0.5, 0.5, 0);
+    // gl.vertexAttrib3f(coords, 0.5, 0.5, 0);
+    gl.vertexAttribPointer(coords, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(coords);
+    // gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     var pointSize = gl.getAttribLocation(shaderProgram, "pointSize");
-    gl.vertexAttrib1f(pointSize, 150);
+    gl.vertexAttrib1f(pointSize, 2);
 
     var color = gl.getUniformLocation(shaderProgram, "color");
     gl.uniform4f(color, 0, 1, 0, 1)
 }
 
 function draw() {
+    for(var i = 0; i < vertexCount * 2; i += 2) {
+        var dx = vertices[i] - mouseX,
+            dy = vertices[i + 1] - mouseY,
+            dist = Math.sqrt(dx * dx +
+                dy * dy);
+        if (dist < 0.1) {
+            vertices[i] = mouseX + dx / dist * 0.1;
+            vertices[i+1] = mouseY + dy / dist * 0.1;
+        } else {
+            vertices[i] += Math.random() * 0.01 - 0.005;
+            vertices[i + 1] += Math.random() * 0.01 - 0.005;
+        }
+    }
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(vertices));
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.POINTS, 0, 1);
+    gl.drawArrays(gl.POINTS, 0, vertexCount);
+
+    requestAnimationFrame(draw);
+}
+
+
+function getShader(gl, id){
+    var shaderScript, theSource, currentChild, shader;
+
+    shaderScript = document.getElementById(id);
+
+    if(!shaderScript){
+        return null;
+    }
+
+    theSource = "";
+    currentChild = shaderScript.firstChild;
+
+    while (currentChild) {
+        if (currentChild.nodeType == currentChild.TEXT_NODE) {
+            theSource += currentChild.textContent;
+        }
+
+        currentChild = currentChild.nextSibling;
+    }
+
+    if (shaderScript.type == "x-shader/x-fragment"){
+        shader = gl.createShader(gl.FRAGMENT_SHADER);
+    } else if (shaderScript.type == "x-shader/x-vertex"){
+        shader = gl.createShader(gl.VERTEX_SHADER);
+    } else {
+        //Unknown shader type
+        return null;
+    }
+    gl.shaderSource(shader, theSource);
+
+    //compile the shader program
+    gl.compileShader(shader);
+
+    //See if it compiled successfully
+    if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
+        alert("An error occurred compiling the shader: "+gl.getShaderInfoLog(shader));
+        return null;
+    }
+
+    return shader;
 }
