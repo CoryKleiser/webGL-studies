@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
     <title>webGL Example</title>
+
     <script id="shader-vs" type="x-shader/x-vertex">
         attribute vec4 coords;
         attribute float pointSize;
+        uniform mat4 transformMatrix;
         void main(void) {
-            gl_Position = coords;
+            gl_Position = transformMatrix * coords;
             gl_PointSize = pointSize;
         }
     </script>
@@ -25,6 +27,10 @@
 </head>
 <body>
 <canvas id="canvas" width="600" height="600"></canvas>
+
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.3.2/gl-matrix-min.js">
+</script>
 <script src="animation.js"></script>
 
 </body>
