@@ -7,7 +7,8 @@ var gl,
     mouseX = 0,
     mouseY = 0,
     matrix = mat4.create(),
-    vertexCount;
+    vertexCount,
+    indexCount;
 
 canvas.addEventListener("mousemove", function(event) {
     mouseX = map(event.clientX, 0, canvas.width, -1, 1);
@@ -21,6 +22,7 @@ function map(value, minSrc, maxSrc, minDst, maxDst) {
 initGL();
 createShaders();
 createVertices();
+createIndices();
 draw();
 
 function initGL(){
@@ -45,27 +47,16 @@ function createShaders(){
 }
 
 function createVertices() {
-    vertices = [];
-    vertices.push(0, 0.9, 0.3,   1, 1, 1, 1);
-    for (var i = 0; i < Math.PI * 2; i += 0.01){
-        vertices.push(Math.cos(i));
-        vertices.push(Math.sin(i));
-        vertices.push(Math.sin(i * 10) * 0.1);
-
-        vertices.push(Math.sin(i * 10) * 0.5 + 0.5);
-        vertices.push(Math.sin(i * 8) * 0.5 + 0.5);
-        vertices.push(Math.sin(i * 12) * 0.5 + 0.5);
-        vertices.push(1);
-    }
-    i = Math.PI * 2;
-    vertices.push(Math.cos(i));
-    vertices.push(Math.sin(i));
-    vertices.push(Math.sin(i * 10) * 0.1);
-
-    vertices.push(Math.sin(i * 10) * 0.5 + 0.5);
-    vertices.push(Math.sin(i * 8) * 0.5 + 0.5);
-    vertices.push(Math.sin(i * 12) * 0.5 + 0.5);
-    vertices.push(1);
+    vertices = [
+        -1, -1, -1,     1, 0, 0, 1,     //0
+        1, -1, -1,      1, 1, 0, 1,     //1
+        -1, 1, -1,      0, 1, 1, 1,     //2
+        1, 1, -1,       0, 0, 1, 1,     //3
+        -1, 1, 1,       1, 0.5, 0, 1,   //4
+        1, 1, 1,        0.5, 1, 1, 1,   //5
+        -1, -1, 1,      1, 0, 0.5, 1,   //6
+        1, -1, 1,       0.5, 0, 1, 1,   //7
+    ];
     vertexCount = vertices.length / 7;
 
     var buffer = gl.createBuffer();
@@ -90,7 +81,24 @@ function createVertices() {
     var perspectiveLoc = gl.getUniformLocation(shaderProgram, "perspectiveMatrix");
     gl.uniformMatrix4fv(perspectiveLoc, false, perspectiveMatrix);
 
-    mat4.translate(matrix, matrix, [0, 0, -2]);
+    mat4.translate(matrix, matrix, [0, 0, -4]);
+}
+
+function createIndices() {
+    var indices = [
+        0, 1, 2,    1, 2, 3,
+        2, 3, 4,    3, 4, 5,
+        4, 5, 6,    5, 6, 7,
+        6, 7, 0,    7, 0, 1,
+        0, 2, 6,    2, 6, 4,
+        1, 3, 7,    3, 7, 5
+    ];
+    indexCount = indices.length;
+
+    var indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(indices), gl.STATIC_DRAW);
+
 }
 
 function draw() {
@@ -102,7 +110,8 @@ function draw() {
     gl.uniformMatrix4fv(transformMatrix, false, matrix);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, vertexCount);
+    //gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
+    gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_BYTE, 0)
     requestAnimationFrame(draw);
 }
 
