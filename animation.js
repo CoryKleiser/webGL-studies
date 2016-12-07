@@ -46,23 +46,26 @@ function createShaders(){
 
 function createVertices() {
     vertices = [];
-    for(var i =0; i < 2; i += 0.01){
-        vertices.push(i - 1);
-        vertices.push(-0.3);
-        vertices.push(Math.sin(i*10)*-.2);
-        vertices.push(i/2);
-        vertices.push(0);
-        vertices.push(1-i/2);
-        vertices.push(1);
+    vertices.push(0, 0.9, 0.3,   1, 1, 1, 1);
+    for (var i = 0; i < Math.PI * 2; i += 0.01){
+        vertices.push(Math.cos(i));
+        vertices.push(Math.sin(i));
+        vertices.push(Math.sin(i * 10) * 0.1);
 
-        vertices.push(i - 1);
-        vertices.push(0.3);
-        vertices.push(Math.sin(i*10)*-.2);
-        vertices.push(0);
-        vertices.push(1-i/2);
-        vertices.push(i/2);
+        vertices.push(Math.sin(i * 10) * 0.5 + 0.5);
+        vertices.push(Math.sin(i * 8) * 0.5 + 0.5);
+        vertices.push(Math.sin(i * 12) * 0.5 + 0.5);
         vertices.push(1);
     }
+    i = Math.PI * 2;
+    vertices.push(Math.cos(i));
+    vertices.push(Math.sin(i));
+    vertices.push(Math.sin(i * 10) * 0.1);
+
+    vertices.push(Math.sin(i * 10) * 0.5 + 0.5);
+    vertices.push(Math.sin(i * 8) * 0.5 + 0.5);
+    vertices.push(Math.sin(i * 12) * 0.5 + 0.5);
+    vertices.push(1);
     vertexCount = vertices.length / 7;
 
     var buffer = gl.createBuffer();
@@ -79,7 +82,7 @@ function createVertices() {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     var pointSize = gl.getAttribLocation(shaderProgram, "pointSize");
-    gl.vertexAttrib1f(pointSize, 1);
+    gl.vertexAttrib1f(pointSize, 20);
 
     var perspectiveMatrix = mat4.create();
     mat4.perspective(perspectiveMatrix, 1, canvas.width / canvas.height, 0.1, 10);
@@ -99,7 +102,7 @@ function draw() {
     gl.uniformMatrix4fv(transformMatrix, false, matrix);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, vertexCount);
     requestAnimationFrame(draw);
 }
 
