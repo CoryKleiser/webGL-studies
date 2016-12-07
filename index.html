@@ -9,17 +9,22 @@
         attribute vec4 coords;
         attribute float pointSize;
         uniform mat4 transformMatrix;
+        uniform mat4 perspectiveMatrix;
+        attribute vec4 colors;
+        varying vec4 varyingColors;
         void main(void) {
-            gl_Position = transformMatrix * coords;
+            gl_Position = perspectiveMatrix * transformMatrix * coords;
             gl_PointSize = pointSize;
+            varyingColors = colors;
         }
     </script>
 
     <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
     uniform vec4 color;
+    varying vec4 varyingColors;
     void main(void) {
-      gl_FragColor = color;
+      gl_FragColor = varyingColors;
     }
     </script>
 
