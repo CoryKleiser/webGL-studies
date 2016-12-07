@@ -12,10 +12,13 @@
         uniform mat4 perspectiveMatrix;
         attribute vec4 colors;
         varying vec4 varyingColors;
+        attribute vec2 textureCoords;
+        varying vec2 varyingTextureCoords;
         void main(void) {
             gl_Position = perspectiveMatrix * transformMatrix * coords;
             gl_PointSize = pointSize;
             varyingColors = colors;
+            varyingTextureCoords = textureCoords;
         }
     </script>
 
@@ -23,8 +26,10 @@
     precision mediump float;
     uniform vec4 color;
     varying vec4 varyingColors;
+    varying vec2 varyingTextureCoords;
+    uniform sampler2D sampler;
     void main(void) {
-      gl_FragColor = varyingColors;
+      gl_FragColor = texture2D(sampler, varyingTextureCoords);
     }
     </script>
 

@@ -7,8 +7,7 @@ var gl,
     mouseX = 0,
     mouseY = 0,
     matrix = mat4.create(),
-    vertexCount,
-    indexCount;
+    vertexCount;
 
 canvas.addEventListener("mousemove", function(event) {
     mouseX = map(event.clientX, 0, canvas.width, -1, 1);
@@ -22,7 +21,7 @@ function map(value, minSrc, maxSrc, minDst, maxDst) {
 initGL();
 createShaders();
 createVertices();
-createIndices();
+loadTexture();
 draw();
 
 function initGL(){
@@ -30,7 +29,7 @@ function initGL(){
     gl = canvas.getContext("webgl");
     gl.enable(gl.DEPTH_TEST);
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0, 0, 0, 1);
+    gl.clearColor(1, 1, 1, 1);
 }
 
 function createShaders(){
@@ -48,28 +47,24 @@ function createShaders(){
 
 function createVertices() {
     vertices = [
-        -1, -1, -1,     1, 0, 0, 1,     //0
-        1, -1, -1,      1, 1, 0, 1,     //1
-        -1, 1, -1,      0, 1, 1, 1,     //2
-        1, 1, -1,       0, 0, 1, 1,     //3
-        -1, 1, 1,       1, 0.5, 0, 1,   //4
-        1, 1, 1,        0.5, 1, 1, 1,   //5
-        -1, -1, 1,      1, 0, 0.5, 1,   //6
-        1, -1, 1,       0.5, 0, 1, 1,   //7
+        -1, -1,     0, 0,
+        1, -1,      1, 0,
+        -1, 1,      0, 1,
+        1, 1,       1, 1
     ];
-    vertexCount = vertices.length / 7;
+    vertexCount = vertices.length / 4;
 
     var buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
     var coords = gl.getAttribLocation(shaderProgram, "coords");
-    gl.vertexAttribPointer(coords, 3, gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT*7, 0);
+    gl.vertexAttribPointer(coords, 2, gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 4, 0);
     gl.enableVertexAttribArray(coords);
 
-    var colorsLocation = gl.getAttribLocation(shaderProgram, "colors");
-    gl.vertexAttribPointer(colorsLocation, 4, gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT*7, Float32Array.BYTES_PER_ELEMENT*3);
-    gl.enableVertexAttribArray(colorsLocation);
+    var textureCoords = gl.getAttribLocation(shaderProgram, "textureCoords");
+    gl.vertexAttribPointer(textureCoords, 2, gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 4, Float32Array.BYTES_PER_ELEMENT * 2);
+    gl.enableVertexAttribArray(textureCoords);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     var pointSize = gl.getAttribLocation(shaderProgram, "pointSize");
@@ -84,21 +79,21 @@ function createVertices() {
     mat4.translate(matrix, matrix, [0, 0, -4]);
 }
 
-function createIndices() {
-    var indices = [
-        0, 1, 2,    1, 2, 3,
-        2, 3, 4,    3, 4, 5,
-        4, 5, 6,    5, 6, 7,
-        6, 7, 0,    7, 0, 1,
-        0, 2, 6,    2, 6, 4,
-        1, 3, 7,    3, 7, 5
-    ];
-    indexCount = indices.length;
+function loadTexture() {
+    var image = document.createElement("img");
+    image.crossOrigin = "";
+    image.addEventListener("load", function () {
+        var texture = gl.createTexture(),
+            sampler = gl.getUniformLocation(shaderProgram, "sampler");
 
-    var indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(indices), gl.STATIC_DRAW);
-
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+        gl.uniform1i(sampler, 0);
+    });
+    image.src="https://placekitten.com/256/256";
 }
 
 function draw() {
@@ -110,8 +105,7 @@ function draw() {
     gl.uniformMatrix4fv(transformMatrix, false, matrix);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
-    //gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
-    gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_BYTE, 0)
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
     requestAnimationFrame(draw);
 }
 
