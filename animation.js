@@ -48,32 +48,48 @@ function createShaders(){
 
 function createVertices() {
     vertices = [
-        -1, -1, -1,     1, 0, 0, 1,     //0
-        1, -1, -1,      1, 1, 0, 1,     //1
-        -1, 1, -1,      0, 1, 1, 1,     //2
-        1, 1, -1,       0, 0, 1, 1,     //3
-        -1, 1, 1,       1, 0.5, 0, 1,   //4
-        1, 1, 1,        0.5, 1, 1, 1,   //5
-        -1, -1, 1,      1, 0, 0.5, 1,   //6
-        1, -1, 1,       0.5, 0, 1, 1,   //7
+        -1, -1, -1,//0
+        1, -1, -1, //1
+        -1, 1, -1, //2
+        1, 1, -1,  //3
+        -1, 1, 1,  //4
+        1, 1, 1,   //5
+        -1, -1, 1, //6
+        1, -1, 1,  //7
     ];
-    vertexCount = vertices.length / 7;
+    vertexCount = vertices.length / 3;
 
     var buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
     var coords = gl.getAttribLocation(shaderProgram, "coords");
-    gl.vertexAttribPointer(coords, 3, gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT*7, 0);
+    gl.vertexAttribPointer(coords, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(coords);
 
-    var colorsLocation = gl.getAttribLocation(shaderProgram, "colors");
-    gl.vertexAttribPointer(colorsLocation, 4, gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT*7, Float32Array.BYTES_PER_ELEMENT*3);
-    gl.enableVertexAttribArray(colorsLocation);
+    var normals = [
+        0, 0, 1,    0, 0, 1,    0, 0, 1,    0, 0, 1,
+        0, 1, 0,    0, 1, 0,    0, 1, 0,    0, 1, 0,
+        0, 0, -1,   0, 0, -1,   0, 0, -1,   0, 0, -1,
+        0, -1, 0,   0, -1, 0,   0, -1, 0,   0, -1, 0,
+        -1, 0, 0,   -1, 0, 0,   -1, 0, 0,   -1, 0, 0,
+        1, 0, 0,    1, 0, 0,    1, 0, 0,    1, 0, 0
+    ];
+
+    var normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+
+    var normalLocation = gl.getAttribLocation(shaderProgram, "normal");
+    gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(normalLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    var pointSize = gl.getAttribLocation(shaderProgram, "pointSize");
-    gl.vertexAttrib1f(pointSize, 20);
+    var lightColor = gl.getUniformLocation(shaderProgram, "lightColor");
+    gl.uniform3f(lightColor, 1, 1, 1);
+
+    var lightDirection = gl.getUniformLocation(shaderProgram, "lightDirection");
+    gl.uniform3f(lightDirection, 0.5, 1, .25);
 
     var perspectiveMatrix = mat4.create();
     mat4.perspective(perspectiveMatrix, 1, canvas.width / canvas.height, 0.1, 10);
@@ -111,7 +127,7 @@ function draw() {
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     //gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
-    gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_BYTE, 0)
+    gl.drawElements(gl.LINE_LOOP, indexCount, gl.UNSIGNED_BYTE, 0);
     requestAnimationFrame(draw);
 }
 

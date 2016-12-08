@@ -7,21 +7,24 @@
 
     <script id="shader-vs" type="x-shader/x-vertex">
         attribute vec4 coords;
-        attribute float pointSize;
         uniform mat4 transformMatrix;
-        uniform mat4 perspectiveMatrix;
-        attribute vec4 colors;
+        attribute vec3 normal;
+        uniform vec3 lightColor;
+        uniform vec3 lightDirection;
         varying vec4 varyingColors;
+        uniform mat4 perspectiveMatrix;
         void main(void) {
+            vec3 norm = normalize(normal);
+            vec3 ld = normalize(lightDirection);
+            float dotProduct = max(dot(norm, ld), 0.0);
+            vec3 vertexColor = lightColor * vec3(1, 1, 0) * dotProduct;
+            varyingColors = vec4(vertexColor, 1);
             gl_Position = perspectiveMatrix * transformMatrix * coords;
-            gl_PointSize = pointSize;
-            varyingColors = colors;
         }
     </script>
 
     <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
-    uniform vec4 color;
     varying vec4 varyingColors;
     void main(void) {
       gl_FragColor = varyingColors;
